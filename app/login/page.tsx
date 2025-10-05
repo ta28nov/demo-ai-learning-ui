@@ -8,9 +8,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Brain, Eye, EyeOff, ArrowLeft, User } from "lucide-react"
+import { Brain, Eye, EyeOff, ArrowLeft, User, GraduationCap, Shield } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+
+const DEMO_ACCOUNTS = [
+  {
+    role: "student",
+    name: "Học sinh",
+    email: "student@ailearning.com",
+    password: "student123",
+    icon: User,
+    color: "blue",
+    redirect: "/dashboard",
+  },
+  {
+    role: "instructor",
+    name: "Giảng viên",
+    email: "instructor@ailearning.com",
+    password: "instructor123",
+    icon: GraduationCap,
+    color: "green",
+    redirect: "/instructor",
+  },
+  {
+    role: "admin",
+    name: "Quản trị viên",
+    email: "admin@ailearning.com",
+    password: "admin123",
+    icon: Shield,
+    color: "purple",
+    redirect: "/admin/users",
+  },
+]
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -20,30 +50,36 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    setEmail("admin@ailearning.com")
-    setPassword("admin123")
+    setEmail("student@ailearning.com")
+    setPassword("student123")
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Login:", { email, password, rememberMe })
 
-    // Giả lập đăng nhập thành công và chuyển hướng
-    if (email === "admin@ailearning.com" && password === "admin123") {
-      router.push("/dashboard")
+    const account = DEMO_ACCOUNTS.find((acc) => acc.email === email && acc.password === password)
+
+    if (account) {
+      // Lưu thông tin vai trò vào localStorage
+      localStorage.setItem("userRole", account.role)
+      localStorage.setItem("userEmail", account.email)
+      localStorage.setItem("userName", account.name)
+
+      // Chuyển hướng đến dashboard tương ứng
+      router.push(account.redirect)
     } else {
-      alert("Vui lòng sử dụng tài khoản demo: admin@ailearning.com / admin123")
+      alert("Email hoặc mật khẩu không đúng. Vui lòng sử dụng một trong các tài khoản demo.")
     }
   }
 
-  const fillAdminCredentials = () => {
-    setEmail("admin@ailearning.com")
-    setPassword("admin123")
+  const fillCredentials = (account: (typeof DEMO_ACCOUNTS)[0]) => {
+    setEmail(account.email)
+    setPassword(account.password)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         {/* Back to home */}
         <Link
           href="/"
@@ -53,28 +89,54 @@ export default function LoginPage() {
           Quay lại trang chủ
         </Link>
 
-        <Card className="mb-4 border-2 border-yellow-200 bg-yellow-50">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-yellow-200 rounded-full">
-                <User className="h-4 w-4 text-yellow-700" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-yellow-800">Tài khoản Demo Admin</h3>
-                <p className="text-sm text-yellow-700">Email: admin@ailearning.com</p>
-                <p className="text-sm text-yellow-700">Mật khẩu: admin123</p>
-              </div>
-              <Button
-                onClick={fillAdminCredentials}
-                size="sm"
-                variant="outline"
-                className="border-yellow-300 text-yellow-700 hover:bg-yellow-100 bg-transparent"
-              >
-                Điền nhanh
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-6 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Tài khoản Demo - Chọn vai trò để xem:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {DEMO_ACCOUNTS.map((account) => {
+              const Icon = account.icon
+              const colorClasses = {
+                blue: "border-blue-200 bg-blue-50 text-blue-700",
+                green: "border-green-200 bg-green-50 text-green-700",
+                purple: "border-purple-200 bg-purple-50 text-purple-700",
+              }
+              const buttonClasses = {
+                blue: "border-blue-300 text-blue-700 hover:bg-blue-100",
+                green: "border-green-300 text-green-700 hover:bg-green-100",
+                purple: "border-purple-300 text-purple-700 hover:bg-purple-100",
+              }
+
+              return (
+                <Card
+                  key={account.role}
+                  className={`border-2 ${colorClasses[account.color as keyof typeof colorClasses]}`}
+                >
+                  <CardContent className="pt-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className={`p-2 rounded-full ${colorClasses[account.color as keyof typeof colorClasses]}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <h4 className="font-semibold">{account.name}</h4>
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <p>Email: {account.email}</p>
+                        <p>Mật khẩu: {account.password}</p>
+                      </div>
+                      <Button
+                        onClick={() => fillCredentials(account)}
+                        size="sm"
+                        variant="outline"
+                        className={`w-full ${buttonClasses[account.color as keyof typeof buttonClasses]} bg-transparent`}
+                      >
+                        Điền nhanh
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
 
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-6">
